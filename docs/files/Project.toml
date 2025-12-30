@@ -1,0 +1,5 @@
+[deps]
+MPSKitPeriodic = "313d436b-ab7d-46bc-ba98-5aa21a465bad"
+
+[compat]
+MPSKitPeriodic = "0.1"
