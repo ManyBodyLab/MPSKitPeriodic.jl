@@ -12,6 +12,6 @@ TensorOperations = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
 [compat]
 MPSKit = "0.13.8"
 PeriodicArrays = "1.1.0"
-TensorKit = "0.15.3"
+TensorKit = "0.15.3, 0.16"
 TensorOperations = "5.3.1"
 julia = "1.10"
