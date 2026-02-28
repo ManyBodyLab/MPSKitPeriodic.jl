@@ -8,28 +8,28 @@ T_RR[i] * GRs[i] = λ GRs[i - 1]
 ```
 where `T_LL` and `T_RR` are the (regularized) transfer matrix operators on a give site for `AL-O-AL` and `AR-O-AR` respectively.
 """
-struct InfinitePeriodicEnvironments{V <: GenericMPSTensor, F} <: AbstractMPSEnvironments
-    GLs::PeriodicVector{V, F}
-    GRs::PeriodicVector{V, F}
+struct InfinitePeriodicEnvironments{V <: GenericMPSTensor} <: AbstractMPSEnvironments
+    GLs::PeriodicVector{V}
+    GRs::PeriodicVector{V}
 end
 
 Base.length(envs::InfinitePeriodicEnvironments) = length(envs.GLs)
 
-MPSKit.leftenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GLs[site]
-MPSKit.rightenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GRs[site]
+leftenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GLs[site]
+rightenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GRs[site]
 
-function MPSKit.environments(
-        below::InfiniteMPS, operator::Union{InfiniteMPO, InfiniteMPOHamiltonian},
-        above::InfiniteMPS = below; kwargs...
+function environments(
+        below::InfinitePeriodicMPS, operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
+        above::InfinitePeriodicMPS = below; kwargs...
     )
-    GLs, GRs = MPSKit.initialize_environments(below, operator, above)
+    GLs, GRs = initialize_environments(below, operator, above)
     envs = InfinitePeriodicEnvironments(GLs, GRs)
-    return MPSKit.recalculate!(envs, below, operator, above; kwargs...)
+    return recalculate!(envs, below, operator, above; kwargs...)
 end
 
-function MPSKit.issamespace(
-        envs::InfinitePeriodicEnvironments, below::InfiniteMPS,
-        operator::Union{InfiniteMPO, InfiniteMPOHamiltonian}, above::InfiniteMPS
+function issamespace(
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
+        operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian}, above::InfinitePeriodicMPS
     )
     L = check_length(below, operator, above)
     for i in 1:L
@@ -47,7 +47,7 @@ function MPSKit.issamespace(
     return true
 end
 
-function MPSKit.recalculate!(
+function recalculate!(
         envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
         operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
         above::InfinitePeriodicMPS = below;
@@ -71,10 +71,10 @@ function MPSKit.recalculate!(
     return envs
 end
 
-# InfiniteMPO environments
+# InfinitePeriodicMPO environments
 # ------------------------
 function initialize_environments(
-        below::InfiniteMPS, operator::InfiniteMPO, above::InfiniteMPS = below
+        below::InfinitePeriodicMPS, operator::InfinitePeriodicMPO, above::InfinitePeriodicMPS = below
     )
     L = check_length(below, operator, above)
     GLs = PeriodicVector([randomize!(allocate_GL(below, operator, above, i)) for i in 1:L])
@@ -83,8 +83,8 @@ function initialize_environments(
 end
 
 function compute_leftenvs!(
-        envs::InfinitePeriodicEnvironments, below::InfiniteMPS,
-        operator::InfiniteMPO, above::InfiniteMPS, alg
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
+        operator::InfinitePeriodicMPO, above::InfinitePeriodicMPS, alg
     )
     # compute eigenvector
     T = TransferMatrix(above.AL, operator, below.AL)
@@ -98,8 +98,8 @@ function compute_leftenvs!(
 end
 
 function compute_rightenvs!(
-        envs::InfinitePeriodicEnvironments, below::InfiniteMPS, operator::InfiniteMPO,
-        above::InfiniteMPS, alg
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS, operator::InfinitePeriodicMPO,
+        above::InfinitePeriodicMPS, alg
     )
     # compute eigenvector
     T = TransferMatrix(above.AR, operator, below.AR)
@@ -120,8 +120,8 @@ end
 # this avoids catastrophic blow-up of norms, while keeping the total normalized
 # and does not lead to issues for negative overlaps and real entries.
 function TensorKit.normalize!(
-        envs::InfinitePeriodicEnvironments, below::InfiniteMPS, operator::InfiniteMPO,
-        above::InfiniteMPS
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS, operator::InfinitePeriodicMPO,
+        above::InfinitePeriodicMPS
     )
     for i in 1:length(operator)
         normalize!(envs.GRs[i])
@@ -132,11 +132,11 @@ function TensorKit.normalize!(
     return envs
 end
 
-# InfiniteMPOHamiltonian environments
+# InfinitePeriodicMPOHamiltonian environments
 # -----------------------------------
 function initialize_environments(
-        below::InfiniteMPS, operator::InfiniteMPOHamiltonian,
-        above::InfiniteMPS = below
+        below::InfinitePeriodicMPS, operator::InfinitePeriodicMPOHamiltonian,
+        above::InfinitePeriodicMPS = below
     )
     L = check_length(above, operator, below)
     GLs = PeriodicVector([allocate_GL(below, operator, above, i) for i in 1:L])
@@ -166,8 +166,8 @@ function initialize_environments(
 end
 
 function compute_leftenvs!(
-        envs::InfinitePeriodicEnvironments, below::InfiniteMPS,
-        operator::InfiniteMPOHamiltonian, above::InfiniteMPS, alg
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
+        operator::InfinitePeriodicMPOHamiltonian, above::InfinitePeriodicMPS, alg
     )
     L = check_length(below, above, operator)
     GLs = envs.GLs
@@ -221,8 +221,8 @@ function compute_leftenvs!(
 end
 
 function left_cyclethrough!(
-        index::Int, GL, below::InfiniteMPS, H::InfiniteMPOHamiltonian,
-        above::InfiniteMPS = below
+        index::Int, GL, below::InfinitePeriodicMPS, H::InfinitePeriodicMPOHamiltonian,
+        above::InfinitePeriodicMPS = below
     )
     # TODO: efficient transfer matrix slicing for large unitcells
     leftinds = 1:index
@@ -235,8 +235,8 @@ function left_cyclethrough!(
 end
 
 function compute_rightenvs!(
-        envs::InfinitePeriodicEnvironments, below::InfiniteMPS,
-        operator::InfiniteMPOHamiltonian, above::InfiniteMPS, alg
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
+        operator::InfinitePeriodicMPOHamiltonian, above::InfinitePeriodicMPS, alg
     )
     L = check_length(above, operator, below)
     GRs = envs.GRs
@@ -291,8 +291,8 @@ function compute_rightenvs!(
 end
 
 function right_cyclethrough!(
-        index::Int, GR, below::InfiniteMPS, operator::InfiniteMPOHamiltonian,
-        above::InfiniteMPS = below
+        index::Int, GR, below::InfinitePeriodicMPS, operator::InfinitePeriodicMPOHamiltonian,
+        above::InfinitePeriodicMPS = below
     )
     # TODO: efficient transfer matrix slicing for large unitcells
     for site in reverse(eachindex(GR))
@@ -306,8 +306,8 @@ end
 
 # no normalization necessary -- for consistant interface
 function TensorKit.normalize!(
-        envs::InfinitePeriodicEnvironments, below::InfiniteMPS,
-        operator::InfiniteMPOHamiltonian, above::InfiniteMPS
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
+        operator::InfinitePeriodicMPOHamiltonian, above::InfinitePeriodicMPS
     )
     return envs
 end
