@@ -8,9 +8,9 @@ T_RR[i] * GRs[i] = λ GRs[i - 1]
 ```
 where `T_LL` and `T_RR` are the (regularized) transfer matrix operators on a give site for `AL-O-AL` and `AR-O-AR` respectively.
 """
-struct InfinitePeriodicEnvironments{V <: GenericMPSTensor} <: AbstractMPSEnvironments
-    GLs::PeriodicVector{V}
-    GRs::PeriodicVector{V}
+struct InfinitePeriodicEnvironments{V <: GenericMPSTensor, P <: PeriodicVector{V}} <: AbstractMPSEnvironments
+    GLs::P
+    GRs::P
 end
 
 Base.length(envs::InfinitePeriodicEnvironments) = length(envs.GLs)
@@ -77,8 +77,9 @@ function initialize_environments(
         below::InfinitePeriodicMPS, operator::InfinitePeriodicMPO, above::InfinitePeriodicMPS = below
     )
     L = check_length(below, operator, above)
-    GLs = PeriodicVector([randomize!(allocate_GL(below, operator, above, i)) for i in 1:L])
-    GRs = PeriodicVector([randomize!(allocate_GR(below, operator, above, i)) for i in 1:L])
+    map = below.AL.map
+    GLs = PeriodicVector([randomize!(allocate_GL(below, operator, above, i)) for i in 1:L], map)
+    GRs = PeriodicVector([randomize!(allocate_GR(below, operator, above, i)) for i in 1:L], map)
     return GLs, GRs
 end
 
@@ -139,8 +140,9 @@ function initialize_environments(
         above::InfinitePeriodicMPS = below
     )
     L = check_length(above, operator, below)
-    GLs = PeriodicVector([allocate_GL(below, operator, above, i) for i in 1:L])
-    GRs = PeriodicVector([allocate_GR(below, operator, above, i) for i in 1:L])
+    map = below.AL.map
+    GLs = PeriodicVector([allocate_GL(below, operator, above, i) for i in 1:L], map)
+    GRs = PeriodicVector([allocate_GR(below, operator, above, i) for i in 1:L], map)
 
     # GL = (1, 0, 0)
     GL = first(GLs)
