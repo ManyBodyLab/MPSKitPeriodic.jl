@@ -313,7 +313,7 @@ end
 Fixedpoints
 ===========================================================================================#
 
-MPSKit.l_RR(ψ::InfinitePeriodicMPS, loc::Int = 1) = adjoint(ψ.C[loc - 1]) * ψ.C[loc - 1]
+MPSKit.l_RR(ψ::InfinitePeriodicMPS, loc::Int = length(ψ) + 1) = adjoint(ψ.C[loc - 1]) * ψ.C[loc - 1]
 MPSKit.l_RL(ψ::InfinitePeriodicMPS, loc::Int = 1) = ψ.C[loc - 1]
 MPSKit.l_LR(ψ::InfinitePeriodicMPS, loc::Int = 1) = ψ.C[loc - 1]'
 
@@ -329,4 +329,4 @@ end
 
 MPSKit.r_RL(ψ::InfinitePeriodicMPS, loc::Int = length(ψ)) = ψ.C[loc]'
 MPSKit.r_LR(ψ::InfinitePeriodicMPS, loc::Int = length(ψ)) = ψ.C[loc]
-MPSKit.r_LL(ψ::InfinitePeriodicMPS, loc::Int = length(ψ)) = ψ.C[loc] * adjoint(ψ.C[loc])
+MPSKit.r_LL(ψ::InfinitePeriodicMPS, loc::Int = 0) = ψ.C[loc] * adjoint(ψ.C[loc])
