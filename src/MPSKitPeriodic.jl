@@ -20,6 +20,7 @@ import MPSKit: fixedpoint
 import MPSKit: MPSBondTensor, AbstractTransferMatrix, MPO, MPOTensor, JordanMPOTensor
 import MPSKit: MPOHamiltonian, AbstractMPSEnvironments, TransferMatrix, isidentitylevel
 
+using LinearAlgebra
 using BlockTensorKit: TensorMapSumSpace
 using BlockTensorKit
 using TensorKit

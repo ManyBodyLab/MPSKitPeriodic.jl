@@ -231,7 +231,7 @@ end
 Utility
 ===========================================================================================#
 
-function AC2(ψ::InfinitePeriodicMPS, i::Integer; kind = :ACAR)
+function MPSKit.AC2(ψ::InfinitePeriodicMPS, i::Integer; kind = :ACAR)
     if kind == :ACAR
         return ψ.AC[i] * _transpose_tail(ψ.AR[i + 1])
     elseif kind == :ALAC
@@ -308,7 +308,7 @@ function TensorKit.dot(ψ₁::InfinitePeriodicMPS, ψ₂::InfinitePeriodicMPS; k
     init = similar(ψ₁.AL[1], _firstspace(ψ₂.AL[1]) ← _firstspace(ψ₁.AL[1]))
     randomize!(init)
     val, = fixedpoint(
-        TransferMatrix(ψ₂.AL, ψ₁.AL), init, :LM, MPSKit.Arnoldi(; krylovdim = krylovdim)
+        flip(TransferMatrix(ψ₂.AL, ψ₁.AL)), init, :LM, MPSKit.Arnoldi(; krylovdim = krylovdim)
     )
     return val
 end
