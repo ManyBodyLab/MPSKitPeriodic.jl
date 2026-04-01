@@ -14,7 +14,7 @@ function (d::PeriodicProductTransferMatrix)(vec)
 end
 
 function MPSKit.TransferMatrix(a::PeriodicVector, b, c::PeriodicVector, isflipped = false)
-    tot = PeriodicProductTransferMatrix(convert(Vector, TransferMatrix.(a, b, c)))
+    tot = PeriodicProductTransferMatrix(PeriodicVector(MPSKit.TransferMatrix.(a, b, c), a.map))
     return isflipped ? flip(tot) : tot
 end
 

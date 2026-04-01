@@ -282,6 +282,9 @@ MPSKit.bond_type(::Type{<:InfinitePeriodicMPS{<:Any, B}}) where {B} = B
 MPSKit.left_virtualspace(ψ::InfinitePeriodicMPS, n::Integer) = left_virtualspace(ψ.AL[n])
 MPSKit.right_virtualspace(ψ::InfinitePeriodicMPS, n::Integer) = right_virtualspace(ψ.AL[n])
 MPSKit.physicalspace(ψ::InfinitePeriodicMPS, n::Integer) = physicalspace(ψ.AL[n])
+MPSKit.physicalspace(ψ::InfinitePeriodicMPS) = PeriodicVector([physicalspace(ψ,n) for n in eachsite(ψ)],ψ.AL.map)
+MPSKit.left_virtualspace(ψ::InfinitePeriodicMPS) = PeriodicVector([left_virtualspace(ψ, n) for n in eachsite(ψ)], ψ.AL.map)
+MPSKit.right_virtualspace(ψ::InfinitePeriodicMPS) = PeriodicVector([right_virtualspace(ψ, n) for n in eachsite(ψ)], ψ.AL.map)
 
 # TensorKit.space(ψ::InfinitePeriodicMPS{<:MPSTensor}, n::Integer) = space(ψ.AC[n], 2)
 # function TensorKit.space(ψ::InfinitePeriodicMPS{<:GenericMPSTensor}, n::Integer)

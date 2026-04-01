@@ -15,23 +15,23 @@ end
 
 Base.length(envs::InfinitePeriodicEnvironments) = length(envs.GLs)
 
-leftenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GLs[site]
-rightenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GRs[site]
+MPSKit.leftenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GLs[site]
+MPSKit.rightenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GRs[site]
 
-function environments(
+function MPSKit.environments(
         below::InfinitePeriodicMPS, operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
         above::InfinitePeriodicMPS = below; kwargs...
     )
-    GLs, GRs = initialize_environments(below, operator, above)
+    GLs, GRs = MPSKit.initialize_environments(below, operator, above)
     envs = InfinitePeriodicEnvironments(GLs, GRs)
-    return recalculate!(envs, below, operator, above; kwargs...)
+    return MPSKit.recalculate!(envs, below, operator, above; kwargs...)
 end
 
-function issamespace(
+function MPSKit.issamespace(
         envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
         operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian}, above::InfinitePeriodicMPS
     )
-    L = check_length(below, operator, above)
+    L = MPSKit.check_length(below, operator, above)
     for i in 1:L
         space(envs.GLs[i]) ==
             (
@@ -47,24 +47,24 @@ function issamespace(
     return true
 end
 
-function recalculate!(
+function MPSKit.recalculate!(
         envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
         operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
         above::InfinitePeriodicMPS = below;
         kwargs...
     )
-    if !issamespace(envs, below, operator, above)
+    if !MPSKit.issamespace(envs, below, operator, above)
         # TODO: in-place initialization?
-        GLs, GRs = initialize_environments(below, operator, above)
+        GLs, GRs = MPSKit.initialize_environments(below, operator, above)
         copy!(envs.GLs, GLs)
         copy!(envs.GRs, GRs)
     end
 
-    alg = environment_alg(below, operator, above; kwargs...)
+    alg = MPSKit.environment_alg(below, operator, above; kwargs...)
 
     @sync begin
-        @spawn compute_leftenvs!(envs, below, operator, above, alg)
-        @spawn compute_rightenvs!(envs, below, operator, above, alg)
+        @spawn MPSKit.compute_leftenvs!(envs, below, operator, above, alg)
+        @spawn MPSKit.compute_rightenvs!(envs, below, operator, above, alg)
     end
     normalize!(envs, below, operator, above)
 
@@ -73,7 +73,7 @@ end
 
 # InfinitePeriodicMPO environments
 # ------------------------
-function initialize_environments(
+function MPSKit.initialize_environments(
         below::InfinitePeriodicMPS, operator::InfinitePeriodicMPO, above::InfinitePeriodicMPS = below
     )
     L = check_length(below, operator, above)
@@ -83,7 +83,7 @@ function initialize_environments(
     return GLs, GRs
 end
 
-function compute_leftenvs!(
+function MPSKit.compute_leftenvs!(
         envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
         operator::InfinitePeriodicMPO, above::InfinitePeriodicMPS, alg
     )
@@ -98,7 +98,7 @@ function compute_leftenvs!(
     return λ, envs
 end
 
-function compute_rightenvs!(
+function MPSKit.compute_rightenvs!(
         envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS, operator::InfinitePeriodicMPO,
         above::InfinitePeriodicMPS, alg
     )
@@ -135,14 +135,14 @@ end
 
 # InfinitePeriodicMPOHamiltonian environments
 # -----------------------------------
-function initialize_environments(
+function MPSKit.initialize_environments(
         below::InfinitePeriodicMPS, operator::InfinitePeriodicMPOHamiltonian,
         above::InfinitePeriodicMPS = below
     )
-    L = check_length(above, operator, below)
+    L = MPSKit.check_length(above, operator, below)
     map = below.AL.map
-    GLs = PeriodicVector([allocate_GL(below, operator, above, i) for i in 1:L], map)
-    GRs = PeriodicVector([allocate_GR(below, operator, above, i) for i in 1:L], map)
+    GLs = PeriodicVector([MPSKit.allocate_GL(below, operator, above, i) for i in 1:L], map)
+    GRs = PeriodicVector([MPSKit.allocate_GR(below, operator, above, i) for i in 1:L], map)
 
     # GL = (1, 0, 0)
     GL = first(GLs)
@@ -167,11 +167,11 @@ function initialize_environments(
     return GLs, GRs
 end
 
-function compute_leftenvs!(
+function MPSKit.compute_leftenvs!(
         envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
         operator::InfinitePeriodicMPOHamiltonian, above::InfinitePeriodicMPS, alg
     )
-    L = check_length(below, above, operator)
+    L = MPSKit.check_length(below, above, operator)
     GLs = envs.GLs
     vsize = length(first(GLs))
 
@@ -186,20 +186,20 @@ function compute_leftenvs!(
     # fill_data!(leftutil, one)
     # @plansor GL[1][1][-1 -2; -3] = ρ_left[-1; -3] * leftutil[-2]
 
-    (L > 1) && left_cyclethrough!(1, GLs, below, operator, above)
+    (L > 1) && MPSKit.left_cyclethrough!(1, GLs, below, operator, above)
 
     for i in 2:vsize
         prev = copy(GLs[1][i])
         zerovector!(GLs[1][i])
-        left_cyclethrough!(i, GLs, below, operator, above)
+        MPSKit.left_cyclethrough!(i, GLs, below, operator, above)
 
         if isidentitylevel(operator, i) # identity matrices; do the hacky renormalization
-            T = regularize(TransferMatrix(above.AL, below.AL), ρ_left, ρ_right)
-            GLs[1][i], convhist = linsolve(flip(T), GLs[1][i], prev, alg, 1, -1)
+            T = MPSKit.regularize(TransferMatrix(above.AL, below.AL), ρ_left, ρ_right)
+            GLs[1][i], convhist = MPSKit.linsolve(flip(T), GLs[1][i], prev, alg, 1, -1)
             convhist.converged == 0 &&
                 @warn "GL$i failed to converge: normres = $(convhist.normres)"
 
-            (L > 1) && left_cyclethrough!(i, GLs, below, operator, above)
+            (L > 1) && MPSKit.left_cyclethrough!(i, GLs, below, operator, above)
 
             # go through the unitcell, again subtracting fixpoints
             for site in 1:L
@@ -208,21 +208,21 @@ function compute_leftenvs!(
             end
 
         else
-            if !isemptylevel(operator, i)
+            if !MPSKit.isemptylevel(operator, i)
                 diag = map(h -> h[i, 1, 1, i], operator[:])
                 T = TransferMatrix(above.AL, diag, below.AL)
-                GLs[1][i], convhist = linsolve(flip(T), GLs[1][i], prev, alg, 1, -1)
+                GLs[1][i], convhist = MPSKit.linsolve(flip(T), GLs[1][i], prev, alg, 1, -1)
                 convhist.converged == 0 &&
                     @warn "GL$i failed to converge: normres = $(convhist.normres)"
             end
-            (L > 1) && left_cyclethrough!(i, GLs, below, operator, above)
+            (L > 1) && MPSKit.left_cyclethrough!(i, GLs, below, operator, above)
         end
     end
 
     return GLs
 end
 
-function left_cyclethrough!(
+function MPSKit.left_cyclethrough!(
         index::Int, GL, below::InfinitePeriodicMPS, H::InfinitePeriodicMPOHamiltonian,
         above::InfinitePeriodicMPS = below
     )
@@ -236,11 +236,11 @@ function left_cyclethrough!(
     return GL
 end
 
-function compute_rightenvs!(
+function MPSKit.compute_rightenvs!(
         envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
         operator::InfinitePeriodicMPOHamiltonian, above::InfinitePeriodicMPS, alg
     )
-    L = check_length(above, operator, below)
+    L = MPSKit.check_length(above, operator, below)
     GRs = envs.GRs
     vsize = length(last(GRs))
 
@@ -255,21 +255,21 @@ function compute_rightenvs!(
     # fill_data!(rightutil, one)
     # @plansor GR[end][end][-1 -2; -3] = r_RR(state)[-1; -3] * rightutil[-2]
 
-    (L > 1) && right_cyclethrough!(vsize, GRs, below, operator, above) # populate other sites
+    (L > 1) && MPSKit.right_cyclethrough!(vsize, GRs, below, operator, above) # populate other sites
 
     for i in (vsize - 1):-1:1
         prev = copy(GRs[end][i])
         zerovector!(GRs[end][i])
-        right_cyclethrough!(i, GRs, below, operator, above)
+        MPSKit.right_cyclethrough!(i, GRs, below, operator, above)
 
         if isidentitylevel(operator, i) # identity matrices; do the hacky renormalization
             # subtract fixpoints
-            T = regularize(TransferMatrix(above.AR, below.AR), ρ_left, ρ_right)
-            GRs[end][i], convhist = linsolve(T, GRs[end][i], prev, alg, 1, -1)
+            T = MPSKit.regularize(TransferMatrix(above.AR, below.AR), ρ_left, ρ_right)
+            GRs[end][i], convhist = MPSKit.linsolve(T, GRs[end][i], prev, alg, 1, -1)
             convhist.converged == 0 &&
                 @warn "GR$i failed to converge: normres = $(convhist.normres)"
 
-            L > 1 && right_cyclethrough!(i, GRs, below, operator, above)
+            L > 1 && MPSKit.right_cyclethrough!(i, GRs, below, operator, above)
 
             # go through the unitcell, again subtracting fixpoints
             for site in 1:L
@@ -277,22 +277,22 @@ function compute_rightenvs!(
                     l_RR(above, site + 1)[2; 1] * r_RR(above, site)[-1; -3]
             end
         else
-            if !isemptylevel(operator, i)
+            if !MPSKit.isemptylevel(operator, i)
                 diag = map(b -> b[i, 1, 1, i], operator[:])
                 T = TransferMatrix(above.AR, diag, below.AR)
-                GRs[end][i], convhist = linsolve(T, GRs[end][i], prev, alg, 1, -1)
+                GRs[end][i], convhist = MPSKit.linsolve(T, GRs[end][i], prev, alg, 1, -1)
                 convhist.converged == 0 &&
                     @warn "GR$i failed to converge: normres = $(convhist.normres)"
             end
 
-            (L > 1) && right_cyclethrough!(i, GRs, below, operator, above)
+            (L > 1) && MPSKit.right_cyclethrough!(i, GRs, below, operator, above)
         end
     end
 
     return GRs
 end
 
-function right_cyclethrough!(
+function MPSKit.right_cyclethrough!(
         index::Int, GR, below::InfinitePeriodicMPS, operator::InfinitePeriodicMPOHamiltonian,
         above::InfinitePeriodicMPS = below
     )
@@ -317,13 +317,13 @@ end
 # Transfer operations
 # -------------------
 
-function transfer_leftenv!(envs::InfinitePeriodicEnvironments, below, operator, above, site::Int)
+function MPSKit.transfer_leftenv!(envs::InfinitePeriodicEnvironments, below, operator, above, site::Int)
     T = TransferMatrix(above.AL[site - 1], operator[site - 1], below.AL[site - 1])
     envs.GLs[site] = envs.GLs[site - 1] * T
     return envs
 end
 
-function transfer_rightenv!(envs::InfinitePeriodicEnvironments, below, operator, above, site::Int)
+function MPSKit.transfer_rightenv!(envs::InfinitePeriodicEnvironments, below, operator, above, site::Int)
     T = TransferMatrix(above.AR[site + 1], operator[site + 1], below.AR[site + 1])
     envs.GRs[site] = T * envs.GRs[site + 1]
     return envs
