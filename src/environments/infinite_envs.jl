@@ -228,9 +228,12 @@ function MPSKit.left_cyclethrough!(
     )
     # TODO: efficient transfer matrix slicing for large unitcells
     leftinds = 1:index
+    l = length(GL)
     for site in eachindex(GL)
-        GL[site + 1][index] = GL[site][leftinds] * TransferMatrix(
-            above.AL[site], H[site][leftinds, 1, 1, index], below.AL[site]
+        sp1 = mod1(site + 1, l)
+        s = mod1(site + 1, l) - 1
+        GL[sp1][index] = GL[s][leftinds] * TransferMatrix(
+            above.AL[s], H[s][leftinds, 1, 1, index], below.AL[s]
         )
     end
     return GL
@@ -297,11 +300,14 @@ function MPSKit.right_cyclethrough!(
         above::InfinitePeriodicMPS = below
     )
     # TODO: efficient transfer matrix slicing for large unitcells
+    l = length(GR)
     for site in reverse(eachindex(GR))
+        sm1 = mod1(site - 1, l)
+        s = mod1(site - 1, l) + 1
         rightinds = index:length(GR[site])
-        GR[site - 1][index] = TransferMatrix(
-            above.AR[site], operator[site][index, 1, 1, rightinds], below.AR[site]
-        ) * GR[site][rightinds]
+        GR[sm1][index] = TransferMatrix(
+            above.AR[s], operator[s][index, 1, 1, rightinds], below.AR[s]
+        ) * GR[s][rightinds]
     end
     return GR
 end

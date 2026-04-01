@@ -3,6 +3,9 @@ const InfinitePeriodicMPOHamiltonian{O <: MPOTensor, F} = MPOHamiltonian{O, Peri
 Base.isfinite(::Type{<:InfinitePeriodicMPOHamiltonian}) = false
 MPSKit.GeometryStyle(::Type{<:InfinitePeriodicMPOHamiltonian}) = InfiniteChainStyle()
 
+function InfinitePeriodicMPOHamiltonian(Ws::AbstractVector)
+    return InfinitePeriodicMPOHamiltonian(PeriodicVector(Ws))
+end
 function InfinitePeriodicMPOHamiltonian(Ws::PeriodicVector{O, F}) where {O <: MPOTensor, F}
     for i in eachindex(Ws)
         right_virtualspace(Ws[i]) == left_virtualspace(Ws[i + 1]) ||
@@ -26,4 +29,8 @@ function MPSKit.isemptylevel(H::InfinitePeriodicMPOHamiltonian, i::Int)
     return any(parent(H)) do h
         return !haskey(h, CartesianIndex(i, 1, 1, i))
     end
+end
+
+function InfinitePeriodicMPOHamiltonian(H::MPSKit.InfiniteMPOHamiltonian)
+    return InfinitePeriodicMPOHamiltonian(H.W)
 end

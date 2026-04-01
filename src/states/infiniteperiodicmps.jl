@@ -223,6 +223,10 @@ function InfinitePeriodicMPS(C₀::MPSBondTensor, AR::AbstractVector{<:GenericMP
     return ψ
 end
 
+function InfinitePeriodicMPS(ψ::MPSKit.InfiniteMPS)
+    return InfinitePeriodicMPS(PeriodicVector(ψ.AL), PeriodicVector(ψ.AR), PeriodicVector(ψ.C), PeriodicVector(ψ.AC))
+end
+
 #===========================================================================================
 Utility
 ===========================================================================================#
@@ -304,7 +308,7 @@ function TensorKit.dot(ψ₁::InfinitePeriodicMPS, ψ₂::InfinitePeriodicMPS; k
     init = similar(ψ₁.AL[1], _firstspace(ψ₂.AL[1]) ← _firstspace(ψ₁.AL[1]))
     randomize!(init)
     val, = fixedpoint(
-        TransferMatrix(ψ₂.AL, ψ₁.AL), init, :LM, Arnoldi(; krylovdim = krylovdim)
+        TransferMatrix(ψ₂.AL, ψ₁.AL), init, :LM, MPSKit.Arnoldi(; krylovdim = krylovdim)
     )
     return val
 end
