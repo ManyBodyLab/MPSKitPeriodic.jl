@@ -3,10 +3,10 @@ const InfinitePeriodicMPOHamiltonian{O <: MPOTensor, F} = MPOHamiltonian{O, Peri
 Base.isfinite(::Type{<:InfinitePeriodicMPOHamiltonian}) = false
 MPSKit.GeometryStyle(::Type{<:InfinitePeriodicMPOHamiltonian}) = InfiniteChainStyle()
 
-function InfinitePeriodicMPOHamiltonian(Ws::AbstractVector)
-    return InfinitePeriodicMPOHamiltonian(PeriodicVector(Ws))
+function InfinitePeriodicMPOHamiltonian(Ws::AbstractVector, translator=x->x[1])
+    return InfinitePeriodicMPOHamiltonian(PeriodicVector(Ws, translator))
 end
-function InfinitePeriodicMPOHamiltonian(Ws::PeriodicVector{O, F}) where {O <: MPOTensor, F}
+function InfinitePeriodicMPOHamiltonian(Ws::PeriodicVector{O, F}, translator=nothing) where {O <: MPOTensor, F}
     for i in eachindex(Ws)
         right_virtualspace(Ws[i]) == left_virtualspace(Ws[i + 1]) ||
             throw(ArgumentError("The virtual spaces of the MPO tensors at site $i do not match."))
