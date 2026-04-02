@@ -78,8 +78,9 @@ function MPSKit.initialize_environments(
     )
     L = check_length(below, operator, above)
     map = below.AL.map
-    GLs = PeriodicVector([randomize!(allocate_GL(below, operator, above, i)) for i in 1:L], map)
-    GRs = PeriodicVector([randomize!(allocate_GR(below, operator, above, i)) for i in 1:L], map)
+    imap = below.AL.imap
+    GLs = PeriodicVector([randomize!(allocate_GL(below, operator, above, i)) for i in 1:L], map, imap)
+    GRs = PeriodicVector([randomize!(allocate_GR(below, operator, above, i)) for i in 1:L], map, imap)
     return GLs, GRs
 end
 

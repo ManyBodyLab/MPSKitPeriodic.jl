@@ -1,4 +1,4 @@
-const InfinitePeriodicMPO{O, F} = MPO{O, PeriodicVector{O, F}}
+const InfinitePeriodicMPO{O, F, G} = MPO{O, PeriodicVector{O, F, G}}
 
 Base.isfinite(::Type{<:InfinitePeriodicMPO}) = false
 MPSKit.GeometryStyle(::Type{<:InfinitePeriodicMPO}) = InfiniteChainStyle()

@@ -1,4 +1,4 @@
-const InfinitePeriodicMPOHamiltonian{O <: MPOTensor, F} = MPOHamiltonian{O, PeriodicVector{O, F}}
+const InfinitePeriodicMPOHamiltonian{O <: MPOTensor, F, G} = MPOHamiltonian{O, PeriodicVector{O, F, G}}
 
 Base.isfinite(::Type{<:InfinitePeriodicMPOHamiltonian}) = false
 MPSKit.GeometryStyle(::Type{<:InfinitePeriodicMPOHamiltonian}) = InfiniteChainStyle()

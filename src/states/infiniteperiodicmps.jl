@@ -43,11 +43,11 @@ tensors `As`, or a list of left-gauged tensors `ALs`.
 - `tol`: gauge fixing tolerance
 - `maxiter`: gauge fixing maximum iterations
 """
-struct InfinitePeriodicMPS{A <: GenericMPSTensor, B <: MPSBondTensor} <: AbstractMPS
-    AL::PeriodicVector{A}
-    AR::PeriodicVector{A}
-    C::PeriodicVector{B}
-    AC::PeriodicVector{A}
+struct InfinitePeriodicMPS{A <: GenericMPSTensor, B <: MPSBondTensor, P1 <: PeriodicVector{A}, P2 <: PeriodicVector{A}, P3 <: PeriodicVector{B}, P4 <: PeriodicVector{A}} <: AbstractMPS
+    AL::P1
+    AR::P2
+    C::P3
+    AC::P4
     function InfinitePeriodicMPS{A, B}(
             AL::PeriodicVector{A}, AR::PeriodicVector{A},
             C::PeriodicVector{B}, AC::PeriodicVector{A} = AL .* C
@@ -59,8 +59,11 @@ struct InfinitePeriodicMPS{A <: GenericMPSTensor, B <: MPSBondTensor} <: Abstrac
         # verify tensors are compatible
         spacetype(A) == spacetype(B) ||
             throw(SpaceMismatch("incompatible space types of AL and C"))
-
-        return new{A, B}(AL, AR, C, AC)
+        P1 = typeof(AL)
+        P2 = typeof(AR)
+        P3 = typeof(C)
+        P4 = typeof(AC)
+        return new{A, B, P1, P2, P3, P4}(AL, AR, C, AC)
     end
     function InfinitePeriodicMPS(
             AL::PeriodicVector{A}, AR::PeriodicVector{A},
@@ -99,7 +102,11 @@ struct InfinitePeriodicMPS{A <: GenericMPSTensor, B <: MPSBondTensor} <: Abstrac
             dim(space(AL[i])) > 0 && dim(space(C[i])) > 0 ||
                 @warn "no fusion channels available at site $i"
         end
-        return new{A, B}(AL, AR, C, AC)
+        P1 = typeof(AL)
+        P2 = typeof(AR)
+        P3 = typeof(C)
+        P4 = typeof(AC)
+        return new{A, B, P1, P2, P3, P4}(AL, AR, C, AC)
     end
 end
 
@@ -286,9 +293,9 @@ MPSKit.bond_type(::Type{<:InfinitePeriodicMPS{<:Any, B}}) where {B} = B
 MPSKit.left_virtualspace(ψ::InfinitePeriodicMPS, n::Integer) = left_virtualspace(ψ.AL[n])
 MPSKit.right_virtualspace(ψ::InfinitePeriodicMPS, n::Integer) = right_virtualspace(ψ.AL[n])
 MPSKit.physicalspace(ψ::InfinitePeriodicMPS, n::Integer) = physicalspace(ψ.AL[n])
-MPSKit.physicalspace(ψ::InfinitePeriodicMPS) = PeriodicVector([physicalspace(ψ,n) for n in eachsite(ψ)],ψ.AL.map)
-MPSKit.left_virtualspace(ψ::InfinitePeriodicMPS) = PeriodicVector([left_virtualspace(ψ, n) for n in eachsite(ψ)], ψ.AL.map)
-MPSKit.right_virtualspace(ψ::InfinitePeriodicMPS) = PeriodicVector([right_virtualspace(ψ, n) for n in eachsite(ψ)], ψ.AL.map)
+MPSKit.physicalspace(ψ::InfinitePeriodicMPS) = PeriodicVector([physicalspace(ψ,n) for n in eachsite(ψ)],ψ.AL.map, ψ.AL.imap)
+MPSKit.left_virtualspace(ψ::InfinitePeriodicMPS) = PeriodicVector([left_virtualspace(ψ, n) for n in eachsite(ψ)], ψ.AL.map, ψ.AL.imap)
+MPSKit.right_virtualspace(ψ::InfinitePeriodicMPS) = PeriodicVector([right_virtualspace(ψ, n) for n in eachsite(ψ)], ψ.AL.map, ψ.AL.imap)
 
 # TensorKit.space(ψ::InfinitePeriodicMPS{<:MPSTensor}, n::Integer) = space(ψ.AC[n], 2)
 # function TensorKit.space(ψ::InfinitePeriodicMPS{<:GenericMPSTensor}, n::Integer)
