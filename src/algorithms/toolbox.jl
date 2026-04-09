@@ -1,6 +1,6 @@
 MPSKit.entropy(state::InfinitePeriodicMPS) = map(Base.Fix1(MPSKit.entropy, state), 1:length(state))
 function MPSKit.entropy(state::InfinitePeriodicMPS, loc::Int)
-    return MPSKit.entropy(entanglement_spectrum(state, loc))
+    return MPSKit.entropy(MPSKit.entanglement_spectrum(state, loc))
 end
 
 function MPSKit.entanglement_spectrum(st::InfinitePeriodicMPS, site::Int = 0)
