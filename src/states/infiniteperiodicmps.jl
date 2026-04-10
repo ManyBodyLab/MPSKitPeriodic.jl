@@ -175,7 +175,7 @@ function InfinitePeriodicMPS(A::AbstractVector{<:GenericMPSTensor}; kwargs...)
         throw(SpaceMismatch("incompatible virtual spaces $leftvspaces and $rightvspaces"))
 
     # initial guess for the gauge tensor
-    V = _firstspace(A_copy[1])
+    V = _firstspace(A_copy[end+1])
     C₀ = isomorphism(storagetype(eltype(A_copy)), V, V)
 
     # initialize tensor storage
@@ -312,10 +312,16 @@ function TensorKit.normalize!(ψ::InfinitePeriodicMPS)
 end
 
 function TensorKit.dot(ψ₁::InfinitePeriodicMPS, ψ₂::InfinitePeriodicMPS; krylovdim = 30)
-    init = similar(ψ₁.AL[1], _firstspace(ψ₂.AL[1]) ← _firstspace(ψ₁.AL[1]))
+    # init = similar(ψ₁.AL[1], _firstspace(ψ₂.AL[1]) ← _firstspace(ψ₁.AL[1]))
+    # @show init
+    # randomize!(init)
+    # val, = fixedpoint(
+    #     flip(TransferMatrix(ψ₂.AL, ψ₁.AL)), init, :LM, MPSKit.Arnoldi(; krylovdim = krylovdim)
+    # )
+    init = similar(ψ₁.AL[end+1], _firstspace(ψ₂.AL[end+1]) ← _firstspace(ψ₁.AL[end+1]))
     randomize!(init)
     val, = fixedpoint(
-        flip(TransferMatrix(ψ₂.AL, ψ₁.AL)), init, :LM, MPSKit.Arnoldi(; krylovdim = krylovdim)
+        TransferMatrix(ψ₂.AL, ψ₁.AL), init, :LM, MPSKit.Arnoldi(; krylovdim = krylovdim)
     )
     return val
 end

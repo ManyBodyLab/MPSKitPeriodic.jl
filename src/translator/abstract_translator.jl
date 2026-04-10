@@ -25,7 +25,7 @@ function (tr::AbstractTranslator)(space::TensorKit.HomSpace, shift::Integer)
     return TensorKit.HomSpace(tr(space.codomain, shift), tr(space.domain, shift))
 end
 
-function (tr::AbstractTranslator)(T::Union{TensorMap, BraidingTensor}, shift::Int)
+function (tr::AbstractTranslator)(T::AbstractTensorMap, shift::Int)
     iszero(shift) && return T
     new_cod = tr(codomain(T), shift)
     new_dom = tr(domain(T), shift)

@@ -15,7 +15,7 @@ import MPSKit: gaugefix!
 import MPSKit: GeometryStyle, InfiniteChainStyle 
 import MPSKit: l_RR, l_RL, l_LR, l_LL, r_RR, r_RL, r_LR, r_LL
 import MPSKit: left_virtualspace, right_virtualspace, physicalspace, bond_type, site_type
-import MPSKit: GenericMPSTensor, isfullrank, _transpose_front, _firstspace, randomize!
+import MPSKit: GenericMPSTensor, isfullrank, _transpose_front, _firstspace, randomize!, _lastspace
 import MPSKit: fixedpoint
 import MPSKit: MPSBondTensor, AbstractTransferMatrix, MPO, MPOTensor, JordanMPOTensor
 import MPSKit: MPOHamiltonian, AbstractMPSEnvironments, TransferMatrix, isidentitylevel
