@@ -15,8 +15,8 @@ end
 
 Base.length(envs::InfinitePeriodicEnvironments) = length(envs.GLs)
 
-MPSKit.leftenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GLs[site]
-MPSKit.rightenv(envs::InfinitePeriodicEnvironments, site::Int, state) = envs.GRs[site]
+MPSKit.leftenv(envs::InfinitePeriodicEnvironments, site::Int, state; kwargs...) = envs.GLs[site]
+MPSKit.rightenv(envs::InfinitePeriodicEnvironments, site::Int, state; kwargs...) = envs.GRs[site]
 
 function MPSKit.environments(
         below::InfinitePeriodicMPS, operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
@@ -25,6 +25,15 @@ function MPSKit.environments(
     GLs, GRs = MPSKit.initialize_environments(below, operator, above)
     envs = InfinitePeriodicEnvironments(GLs, GRs)
     return MPSKit.recalculate!(envs, below, operator, above; kwargs...)
+end
+
+function MPSKit.environments(
+        below::InfinitePeriodicMPS, operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
+        above::InfinitePeriodicMPS, alg; timeroutput = MPSKit.NoTimerOutput()
+    )
+    GLs, GRs = MPSKit.initialize_environments(below, operator, above)
+    envs = InfinitePeriodicEnvironments(GLs, GRs)
+    return MPSKit.recalculate!(envs, below, operator, above, alg; timeroutput)
 end
 
 function MPSKit.issamespace(
@@ -45,6 +54,49 @@ function MPSKit.issamespace(
         ) || return false
     end
     return true
+end
+
+function MPSKit.recalculate!(
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
+        operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
+        above::InfinitePeriodicMPS, alg::MPSKit.DynamicTols.DynamicTol;
+        timeroutput = MPSKit.NoTimerOutput()
+    )
+    return MPSKit.recalculate!(envs, below, operator, above, alg.alg; timeroutput)
+end
+
+function MPSKit.recalculate!(
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
+        operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
+        above::InfinitePeriodicMPS, ::MPSKit.Defaults.DefaultAlgorithm;
+        timeroutput = MPSKit.NoTimerOutput()
+    )
+    return MPSKit.recalculate!(envs, below, operator, above, KrylovKit.GMRES(); timeroutput)
+end
+
+function MPSKit.recalculate!(
+        envs::InfinitePeriodicEnvironments, below::InfinitePeriodicMPS,
+        operator::Union{InfinitePeriodicMPO, InfinitePeriodicMPOHamiltonian},
+        above::InfinitePeriodicMPS, alg;
+        timeroutput = MPSKit.NoTimerOutput()
+    )
+    if !MPSKit.issamespace(envs, below, operator, above)
+        GLs, GRs = MPSKit.initialize_environments(below, operator, above)
+        copy!(envs.GLs, GLs)
+        copy!(envs.GRs, GRs)
+    end
+
+    @sync begin
+        @spawn MPSKit.compute_leftenvs!(envs, below, operator, above, alg)
+        @spawn MPSKit.compute_rightenvs!(envs, below, operator, above, alg)
+    end
+    normalize!(envs, below, operator, above)
+
+    return envs
+end
+
+function MPSKit.environment_alg(below::InfinitePeriodicMPS, ::InfinitePeriodicMPOHamiltonian, above::InfinitePeriodicMPS; kwargs...)
+    return KrylovKit.GMRES(; kwargs...)
 end
 
 function MPSKit.recalculate!(
@@ -326,4 +378,16 @@ function MPSKit.transfer_rightenv!(envs::InfinitePeriodicEnvironments, below, op
     T = TransferMatrix(above.AR[site + 1], operator[site + 1], below.AR[site + 1])
     envs.GRs[site] = T * envs.GRs[site + 1]
     return envs
+end
+
+function MPSKit.AC_hamiltonian(
+        below::InfinitePeriodicMPS, H::InfinitePeriodicMPOHamiltonian, above::InfinitePeriodicMPS = below
+    )
+    return MPSKit.AC_hamiltonian(1, below, H, above, MPSKit.environments(below, H, above))
+end
+
+function MPSKit.AC2_hamiltonian(
+        below::InfinitePeriodicMPS, H::InfinitePeriodicMPOHamiltonian, above::InfinitePeriodicMPS = below
+    )
+    return MPSKit.AC2_hamiltonian(1, below, H, above, MPSKit.environments(below, H, above))
 end

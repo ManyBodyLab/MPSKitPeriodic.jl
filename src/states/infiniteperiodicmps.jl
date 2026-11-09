@@ -350,3 +350,21 @@ end
 MPSKit.r_RL(ψ::InfinitePeriodicMPS, loc::Int = length(ψ)) = ψ.C[loc]'
 MPSKit.r_LR(ψ::InfinitePeriodicMPS, loc::Int = length(ψ)) = ψ.C[loc]
 MPSKit.r_LL(ψ::InfinitePeriodicMPS, loc::Int = 0) = ψ.C[loc] * adjoint(ψ.C[loc])
+
+function MPSKit.LeftGaugedQP(
+        datfun, left_gs::InfinitePeriodicMPS, right_gs::InfinitePeriodicMPS = left_gs;
+        sector = leftunit(left_gs), momentum = 0.0
+    )
+    excitation_space = Vect[typeof(sector)](sector => 1)
+    VLs = convert(Vector, map(left_null, left_gs.AL))
+    Xs = map(enumerate(VLs)) do (loc, vl)
+        x = similar(
+            vl,
+            right_virtualspace(vl) ← excitation_space ⊗ right_virtualspace(right_gs, loc)
+        )
+        MPSKit.fill_data!(x, datfun)
+        return x
+    end
+    sum(dim, Xs) == 0 && @warn "LeftGaugedQP: No possible fusion channels"
+    return MPSKit.LeftGaugedQP(left_gs, right_gs, VLs, Xs, momentum)
+end

@@ -56,3 +56,9 @@ function MPSKit.transfer_spectrum(
 
     return eigenvals
 end
+
+function MPSKit.find_groundstate(
+        mps::InfinitePeriodicMPS, operator, alg::MPSKit.VUMPS, envs...
+    )
+    return MPSKit.dominant_eigsolve(operator, mps, alg, envs...; which = :SR)
+end
