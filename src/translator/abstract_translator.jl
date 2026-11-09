@@ -9,17 +9,20 @@ function (tr::AbstractTranslator)(f::TensorKit.FusionTree, shift::Integer)
     return FusionTree(new_uncoupled, new_coupled, f.isdual, f.innerlines, f.vertices)
 end
 function (tr::AbstractTranslator)(space::TensorKit.ElementarySpace, shift::Integer)
-    I = sectortype(space)
-    dual = isdual(space)
-    return typeof(space)(translate_sector(c, tr, shift,dual) => dim(space, c) for c in sectors(space); dual=dual)
-    return Vect[I](translate_sector(c, tr, shift,dual) => dim(space, c) for c in sectors(space); dual=dual)
+    if isdual(space)
+        return dual(tr(dual(space), shift))
+    end
+    return typeof(space)(translate_sector(c, tr, shift) => dim(space, c) for c in sectors(space))
 end
 function (tr::AbstractTranslator)(space::TensorKit.ProductSpace, shift::Integer)
     isempty(space.spaces) && return space
     return ProductSpace(map(V -> tr(V, shift), space.spaces))
 end
 function (tr::AbstractTranslator)(space::SumSpace, shift::Int)
-    return SumSpace(map(V -> tr(V, shift), space.spaces); dual = space.dual)
+    if isdual(space)
+        return dual(tr(dual(space), shift))
+    end
+    return SumSpace(map(V -> tr(V, shift), space.spaces))
 end
 function (tr::AbstractTranslator)(space::TensorKit.HomSpace, shift::Integer)
     return TensorKit.HomSpace(tr(space.codomain, shift), tr(space.domain, shift))
