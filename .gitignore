@@ -7,7 +7,6 @@ benchmark/results
 .benchmarkci
 .tmp
 .vscode/
-src/translator/fqh_translator.jl
 Manifest.toml
 benchmark/*.json
 dev/
