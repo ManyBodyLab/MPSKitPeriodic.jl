@@ -5,7 +5,6 @@ authors = ["Andreas Feuerpfeil <development@manybodylab.com>"]
 
 [deps]
 BlockTensorKit = "5f87ffc2-9cf1-4a46-8172-465d160bd8cd"
-KrylovKit = "0b49e829-5828-5224-aa8c-760344e454f8"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MPSKit = "bb1c41ca-d63c-52ed-829e-0820dda26502"
 PeriodicArrays = "343d6138-6384-4525-8bee-38906309ab36"
@@ -14,7 +13,6 @@ TensorOperations = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
 
 [compat]
 BlockTensorKit = "0.3.9"
-KrylovKit = "0.6"
 LinearAlgebra = "1.12.0"
 MPSKit = "0.13.8"
 PeriodicArrays = "2.0"

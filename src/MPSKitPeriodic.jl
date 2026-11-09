@@ -9,7 +9,7 @@ export InfinitePeriodicMPOHamiltonian
 export FQHTranslator
 
 import MPSKit 
-import KrylovKit
+using MPSKit: KrylovKit
 using MPSKit: _transpose_tail, AbstractMPS
 import MPSKit: AC2, eachsite
 import MPSKit: gaugefix!
