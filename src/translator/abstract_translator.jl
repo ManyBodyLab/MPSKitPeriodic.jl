@@ -51,10 +51,6 @@ end
 
 function (tr::AbstractTranslator)(T::MPSKit.JordanMPOTensor, shift::Int)
     iszero(shift) && return T
-    V = tr(T.V, shift)
-    A = tr(T.A, shift)
-    B = tr(T.B, shift)
-    C = tr(T.C, shift)
-    D = tr(T.D, shift)
-    return MPSKit.JordanMPOTensor(V, A, B, C, D)
+    new_tensors = tr(T.tensors, shift)
+    return MPSKit.JordanMPOTensor(new_tensors, copy(T.scalars))
 end
